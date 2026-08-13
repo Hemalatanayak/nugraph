@@ -62,7 +62,7 @@ class FilterDecoder(nn.Module):
             self.target_precision = tm.Precision(**metric_args)
             self.target_cm_recall = tm.ConfusionMatrix(normalize="true", **metric_args)
             self.target_cm_precision = tm.ConfusionMatrix(normalize="pred", **metric_args)
-            self.embeddings = CombinedEmbeddingPlot(method="umap")
+            # self.embeddings = CombinedEmbeddingPlot(method="umap")
 
 
         # network
@@ -88,7 +88,7 @@ class FilterDecoder(nn.Module):
             stage: Stage name (train/val/test)
         """
 
-        if not self.da_loss_fnc_name in self.domain_adaptation_classes:
+        if not self.da_loss_fnc_name in self.domain_adaptation_classes and len(data)==1:
            source_data = data
         else:
            source_data, target_data = data 
@@ -144,6 +144,7 @@ class FilterDecoder(nn.Module):
            else:
               sys.exit( f"The function {self.da_loss_fnc_name} does not exist." )
 
+        lossDA = raw_lossDA
         if self.assume_target_label_known: 
            # Total loss
            loss = loss_source + loss_target + lossDA
@@ -156,13 +157,13 @@ class FilterDecoder(nn.Module):
         name = "_source/" if self.da_loss_fnc_name else "/"
 
         if stage:
-            metrics[f"filter_loss{name}{stage}"] = loss
+            metrics[f"loss_filter_{name}{stage}"] = loss
             metrics[f"filter_recall{name}{stage}"] = self.source_recall(x_source, y_source)
             metrics[f"filter_precision{name}{stage}"] = self.source_precision(x_source, y_source)
             if self.da_loss_fnc_name: 
                 metrics[f"recall_filter_target/{stage}"] = self.target_recall(x_target, y_target)
                 metrics[f"precision_filter_target/{stage}"] = self.target_precision(x_target, y_target)
-                metrics[f"loss_filter_source/{stage}"] = loss_source
+                # metrics[f"loss_filter_source/{stage}"] = loss_source
                 metrics[f"loss_filter_target/{stage}"] = loss_target
                 if self.da_loss_fnc_name == "dann":
                     metrics[f"DA_loss_capped_filter/{stage}"] = lossDA
@@ -181,7 +182,7 @@ class FilterDecoder(nn.Module):
             if self.da_loss_fnc_name in self.domain_adaptation_classes:
                 self.target_cm_recall.update(x_target, y_target)
                 self.target_cm_precision.update(x_target, y_target)
-                self.embeddings.update(source_data["hit"].x, y_source, target_data["hit"].x, y_target)       
+                # self.embeddings.update(source_data["hit"].x, y_source, target_data["hit"].x, y_target)       
 
         # run network and add output to graph object
         source_data["hit"].x_filter = source_data["hit"].x_filter.sigmoid()
@@ -255,12 +256,12 @@ class FilterDecoder(nn.Module):
                                 global_step=epoch)
             self.target_cm_precision.reset()
             
-            # # Plot the embedding space 
-            dat1, lab1, dat2, lab2 = self.embeddings.compute()
-            dat1sub, lab1sub = self.embeddings.subsample(dat1, lab1, max_samples=1000)
-            dat2sub, lab2sub = self.embeddings.subsample(dat2, lab2, max_samples=1000)
+            # # # Plot the embedding space 
+            # dat1, lab1, dat2, lab2 = self.embeddings.compute()
+            # dat1sub, lab1sub = self.embeddings.subsample(dat1, lab1, max_samples=1000)
+            # dat2sub, lab2sub = self.embeddings.subsample(dat2, lab2, max_samples=1000)
             
-            embeddings_fig = self.embeddings.plot_combined(dat1sub, lab1sub, dat2sub, lab2sub, epoch=epoch, class_names=self.classes)
-            logger.experiment.add_figure(f"Embeddings filter/{stage}",
-                                     embeddings_fig, global_step=epoch)
-            self.embeddings.reset()
+            # embeddings_fig = self.embeddings.plot_combined(dat1sub, lab1sub, dat2sub, lab2sub, epoch=epoch, class_names=self.classes)
+            # logger.experiment.add_figure(f"Embeddings filter/{stage}",
+            #                          embeddings_fig, global_step=epoch)
+            # self.embeddings.reset()

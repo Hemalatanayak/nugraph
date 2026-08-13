@@ -39,9 +39,11 @@ class SemanticDecoder(nn.Module):
                  hit_features: int,
                  semantic_classes: list[str],
                  da_loss_fnc_name: str = None,
-                 warmup_epochs: int = 0):
+                 warmup_epochs: int = 0,
+                 filter_head = False):
         super().__init__()
 
+        self.filter_head = filter_head
         self.semantic_classes = semantic_classes
         self.warmup_epochs = warmup_epochs
         self.da_loss_fnc_name = da_loss_fnc_name
@@ -93,7 +95,7 @@ class SemanticDecoder(nn.Module):
            self.embeddings = CombinedEmbeddingPlot(method="umap")
 
         # network
-        self.net = nn.Linear(hit_features, len(semantic_classes))
+        self.net = nn.Linear(in_features=hit_features, out_features= len(semantic_classes))
             
         self.classes = semantic_classes
 
@@ -117,7 +119,7 @@ class SemanticDecoder(nn.Module):
         """
 
         # the data
-        if not self.da_loss_fnc_name in self.domain_adaptation_classes:
+        if not self.da_loss_fnc_name in self.domain_adaptation_classes and len(data)==1:
            source_data = data
         else:
            source_data, target_data = data 
@@ -316,7 +318,15 @@ class SemanticDecoder(nn.Module):
            dat1sub, lab1sub = self.embeddings.subsample(dat1, lab1, max_samples=1000)
            dat2sub, lab2sub = self.embeddings.subsample(dat2, lab2, max_samples=1000)
         
-           embeddings_fig = self.embeddings.plot_combined(dat1sub, lab1sub, dat2sub, lab2sub, epoch=epoch, class_names=self.semantic_classes)
-           logger.experiment.add_figure(f"Embeddings semantic/{stage}",
+           embeddings_fig = self.embeddings.plot_combined(dat1sub, lab1sub, dat2sub, lab2sub, epoch=epoch, class_names=self.semantic_classes, filter_decoder=self.filter_head)
+
+           if self.filter_head:
+               embed_fig_s, embed_fig_f = embeddings_fig
+               logger.experiment.add_figure(f"Embeddings semantic/{stage}",
+                                     embed_fig_s, global_step=epoch)
+               logger.experiment.add_figure(f"Embeddings Filter/{stage}",
+                     embed_fig_f, global_step=epoch)
+           else:
+               logger.experiment.add_figure(f"Embeddings semantic/{stage}",
                                      embeddings_fig, global_step=epoch)
            self.embeddings.reset()

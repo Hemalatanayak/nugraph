@@ -1,0 +1,31 @@
+input_files: 2 # 1 or 2
+
+run_event_decoder: False
+run_semantic_decoder: True
+run_filter_decoder: True
+run_vertex_head: False
+run_instance_head: False
+run_domain_adaptation: True  # set to False if DA off
+
+source_filename: "/scratch/7DayLifetime/cerati/concat-final-makeup.tiny.gnn.h5"
+target_filename: "/scratch/7DayLifetime/cerati/concat-final-makeup.tiny.gnn.var.h5"  # fixed noise
+
+train: 
+    lr: 0.001
+    epochs: 50
+    train_batch_size: 64
+    da_loss: "dann"  #dann, mmd, semantic, sinkhorn
+    norm_mode: 'shared'
+
+model:
+    in_feat: 5
+    hit_feat: 128
+    nexus_feat: 32
+    instance_feat: 32
+    interaction_feat: 32    
+
+ckpt_dir: '/scratch/7DayLifetime/hnayak/nugraph_data/nugraph_logs/NuGraphMain/'
+device_number: 0
+
+resume_ckpt_path: "enter_path"
+train_ckpt_path: "enter_path"

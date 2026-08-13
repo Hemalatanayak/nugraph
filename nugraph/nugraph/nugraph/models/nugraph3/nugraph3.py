@@ -117,7 +117,8 @@ class NuGraph3(LightningModule):
             print("Turning the semantic head on")
             self.semantic_decoder = SemanticDecoder(hit_features, semantic_classes, 
                                                     da_loss_fnc_name=self.da_loss_fnc_name, 
-                                                    warmup_epochs=self.warmup_epochs)
+                                                    warmup_epochs=self.warmup_epochs,
+                                                    filter_head = filter_head)
             if norm_mode == 'shared':
                 self.semantic_decoder.assume_target_label_known = False
             self.decoders.append(self.semantic_decoder)
@@ -175,14 +176,13 @@ class NuGraph3(LightningModule):
         
         # Check if the input is a list of two batches
         batchA = data
-        if self.da_loss_fnc_name in self.domain_adaptation_classes:
-           if isinstance(data, list) and len(data) == 2:
-              batchA, batchB = data
-           else:
-              raise ValueError("Expected input data to be a list of two batches.")
+        if self.da_loss_fnc_name in self.domain_adaptation_classes or len(data) == 2: # changed here to support No DA
+            batchA, batchB = data
+        else:
+            raise ValueError("Expected input data to be a list of two batches.")
 
         # run the encoder and message-passing blocks
-        if self.da_loss_fnc_name in self.domain_adaptation_classes:
+        if self.da_loss_fnc_name in self.domain_adaptation_classes or len(data) ==2:  # added len(data)==2 here to support No DA
            self.encoder(data=[batchA,batchB])
            for _ in range(self.num_iters):
                self.core_net(batchA)
@@ -195,8 +195,8 @@ class NuGraph3(LightningModule):
         # determine if the DA loss function is enabled for a decoder
         enable_da_decoders = []
         for name, decoder in {"event_decoder": getattr(self, "event_decoder", None),
-                              "semantic_decoder": getattr(self, "semantic_decoder", None)
-                              # "filter_decoder": getattr(self, "filter_decoder", None)
+                              "semantic_decoder": getattr(self, "semantic_decoder", None),
+                              "filter_decoder": getattr(self, "filter_decoder", None)
                              }.items():
             if decoder and hasattr(decoder, "use_domain_adaptation"):
                enable_da_decoders.append( decoder )

@@ -98,7 +98,7 @@ class CombinedEmbeddingPlot:
         else:
             return x, y
 
-    def plot_combined(self, dataset1, labels1, dataset2, labels2, epoch=None, class_names=None):
+    def plot_combined(self, dataset1, labels1, dataset2, labels2, epoch=None, class_names=None, filter_decoder=False):
         dataset1_np = dataset1.cpu().detach().numpy()
         labels1_np = labels1.cpu().detach().numpy().astype(int)
         dataset2_np = dataset2.cpu().detach().numpy()
@@ -117,39 +117,64 @@ class CombinedEmbeddingPlot:
         elif len(class_names) <= max(combined_labels):
             raise ValueError("The class_names list must include a name for each class index in the data.")
 
-        unique_classes = np.unique(combined_labels)
-        # colors = plt.cm.inferno(np.linspace(0, 1, len(unique_classes)))
-        # colors = plt.cm.tab20(np.linspace(0, 1, len(unique_classes)))
-        colors = plt.cm.Set1(np.arange(len(unique_classes)))
-        class_color_map = {cls: colors[idx] for idx, cls in enumerate(unique_classes)}
+        def create_plot(l1, l2, names_dict, title_suffix=""):
+                    unique_classes = np.unique(np.concatenate([l1, l2]))
+                    colors = plt.cm.Set1(np.arange(len(unique_classes)))
+                    class_color_map = {cls: colors[idx] for idx, cls in enumerate(unique_classes)}
+        
+                    fig, ax = plt.subplots(figsize=(12, 10))
+        
+                    for cls in np.unique(l1):
+                        mask = l1 == cls
+                        display_name = names_dict.get(cls, f"Class {cls}")
+                        ax.scatter(
+                            embedding1[mask, 0], embedding1[mask, 1],
+                            label=f"Source - {display_name}", color=class_color_map[cls],
+                            marker='o', s=100, edgecolor='k', alpha=0.8
+                        )
+        
+                    for cls in np.unique(l2):
+                        mask = l2 == cls
+                        display_name = names_dict.get(cls, f"Class {cls}")
+                        ax.scatter(
+                            embedding2[mask, 0], embedding2[mask, 1],
+                            label=f"Target - {display_name}", color=class_color_map[cls],
+                            marker='^', s=150, edgecolor='k', alpha=0.8
+                        )
+        
+                    ax.legend(fontsize=12, loc='upper left', bbox_to_anchor=(1.02, 1), borderaxespad=0., framealpha=1.0, ncol=1)
+                    title = f"{self.method.upper()} Embeddings of Source and Target Datasets{title_suffix}"
+                    if epoch is not None:
+                        title += f" (Epoch {epoch})"
+                    ax.set_title(title, fontsize=16)
+                    fig.tight_layout()
+                    plt.close(fig)
+                    return fig
 
-        fig, ax = plt.subplots(figsize=(12, 10))
+        # Create mapping for original plot (-1 is Background, rest are from class_names)
+        original_names_dict = {-1: "Background"}
+        for i, name in enumerate(class_names):
+            original_names_dict[i] = name
 
-        for cls in np.unique(labels1_np):
-            mask = labels1_np == cls
-            display_name = "Background" if cls == -1 else class_names[cls]
-            ax.scatter(
-                embedding1[mask, 0], embedding1[mask, 1],
-                label=f"Source - {display_name}", color=class_color_map[cls],
-                marker='o', s=100, edgecolor='k', alpha=0.8
-            )
+        fig1 = create_plot(labels1_np, labels2_np, original_names_dict)
 
-        for cls in np.unique(labels2_np):
-            mask = labels2_np == cls
-            display_name = "Background" if cls == -1 else class_names[cls]
-            ax.scatter(
-                embedding2[mask, 0], embedding2[mask, 1],
-                label=f"Target - {display_name}", color=class_color_map[cls],
-                marker='^', s=150, edgecolor='k', alpha=0.8
-            )
+        # If filter decoder is false
+        if not filter_decoder:
+            return fig1
 
-        # ax.legend(fontsize=12, loc='upper right', bbox_to_anchor=(1, 1), framealpha=1.0)
-        ax.legend(fontsize=12, loc='upper left', bbox_to_anchor=(1.02, 1), borderaxespad=0., framealpha=1.0, ncol=1 )
-        title = f"{self.method.upper()} Embeddings of Source and Target Datasets"
-        if epoch is not None:
-            title += f" (Epoch {epoch})"
-        ax.set_title(title, fontsize=16)
-        fig.tight_layout()
+        # 3. If filter_decoder is True, generate the second grouped plot
+        # Map all classes that are NOT -1 to 0 (Signal)
+        labels1_filtered = np.where(labels1_np == -1, -1, 0)
+        labels2_filtered = np.where(labels2_np == -1, -1, 0)
+        
+        filtered_names_dict = {-1: "Background", 0: "Signal"}
+        
+        fig2 = create_plot(
+            labels1_filtered, 
+            labels2_filtered, 
+            filtered_names_dict, 
+            title_suffix=" (Signal vs Background)"
+        )
 
-        plt.close(fig)
-        return fig
+        # Return both figures so you can log/save them independently
+        return fig1, fig2
