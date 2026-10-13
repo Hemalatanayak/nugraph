@@ -255,7 +255,7 @@ class EventDecoder(nn.Module):
                    xticklabels=self.classes,
                    yticklabels=self.classes,
                    vmin=0, vmax=1,
-                   annot=True)
+                   annot=True, annot_kws={"size": 14})
         plt.ylim(0, len(self.classes))
         plt.xlabel("Assigned label")
         plt.ylabel("True label")

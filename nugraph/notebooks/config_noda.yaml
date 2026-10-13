@@ -8,7 +8,9 @@ run_instance_head: False
 run_domain_adaptation: False  # set to False if DA off
 
 source_filename: "/scratch/7DayLifetime/cerati/concat-final-makeup.tiny.gnn.h5"
-target_filename: "/scratch/7DayLifetime/cerati/concat-final-makeup.tiny.gnn.var.h5"  # fixed noise
+#target_filename: "/scratch/7DayLifetime/cerati/concat-final-makeup.tiny.gnn.var.h5"  # fixed noise
+#target_filename: "/scratch/7DayLifetime/hnayak/nugraph_data/noisy_data/rms_scaled_noise/concat-final-makeup.tiny.gnn.rescaled.h5" #rms var
+target_filename: "/scratch/7DayLifetime/hnayak/nugraph_data/noisy_data/integral_scaled_noise/concat-final-makeup.tiny.gnn.rescaled2.h5" #integral var
 
 train: 
     lr: 0.001

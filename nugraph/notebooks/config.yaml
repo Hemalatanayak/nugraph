@@ -8,7 +8,9 @@ run_instance_head: False
 run_domain_adaptation: True  # set to False if DA off
 
 source_filename: "/scratch/7DayLifetime/cerati/concat-final-makeup.tiny.gnn.h5"
-target_filename: "/scratch/7DayLifetime/cerati/concat-final-makeup.tiny.gnn.var.h5"  # fixed noise
+#target_filename: "/scratch/7DayLifetime/cerati/concat-final-makeup.tiny.gnn.var.h5"  # fixed noise
+target_filename: "/scratch/7DayLifetime/hnayak/nugraph_data/noisy_data/rms_scaled_noise/concat-final-makeup.tiny.gnn.rescaled.h5" #rms var
+# target_filename: "/scratch/7DayLifetime/hnayak/nugraph_data/noisy_data/integral_scaled_noise/concat-final-makeup.tiny.gnn.rescaled2.h5" #integral var
 
 train: 
     lr: 0.001
@@ -24,8 +26,8 @@ model:
     instance_feat: 32
     interaction_feat: 32    
 
-ckpt_dir: '/scratch/7DayLifetime/hnayak/nugraph_data/nugraph_logs/NuGraphMain/'
+ckpt_dir: '/scratch/7DayLifetime/hnayak/nugraph_data/nugraph_logs/NuGraphMain/corrected_loss_with_filter/rms_scale/DA_DANN/only_test/'
 device_number: 0
 
 resume_ckpt_path: "enter_path"
-train_ckpt_path: "enter_path"
+train_ckpt_path: "/scratch/7DayLifetime/hnayak/nugraph_data/nugraph_logs/NuGraphMain/corrected_loss_with_filter/rms_scale/DA_DANN/uBooNE-Tiny-Data-2026-08-14-14-31-32/version_0/checkpoints/epoch=44-step=13950.ckpt"

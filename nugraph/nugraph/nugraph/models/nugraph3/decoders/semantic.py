@@ -261,15 +261,18 @@ class SemanticDecoder(nn.Module):
             cm: Confusion matrix object
         """
         confusion = cm.compute().cpu()
-        fig = plt.figure(figsize=[8,6])
+        fig, ax = plt.subplots(figsize=(8, 6), dpi=150)
         sn.heatmap(confusion,
                    xticklabels=self.classes,
                    yticklabels=self.classes,
                    vmin=0, vmax=1,
-                   annot=True)
-        plt.ylim(0, len(self.classes))
-        plt.xlabel("Assigned label")
-        plt.ylabel("True label")
+                   annot=True, annot_kws={"size": 14}, ax=ax)
+        ax.tick_params(axis="x", labelsize=12)
+        ax.tick_params(axis="y", labelsize=12)
+        ax.set_ylim(len(self.classes), 0)
+        ax.set_xlabel("Assigned label", fontsize=11)
+        ax.set_ylabel("True label", fontsize=11)
+        fig.tight_layout()
         return fig
 
         
